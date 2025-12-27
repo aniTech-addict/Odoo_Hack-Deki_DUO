@@ -11,7 +11,10 @@ import MaintenanceDetailPage from "./pages/MaintenanceDetailPage.jsx";
 import CalendarPage from "./pages/Calendar.jsx";
 import ReportsPage from "./pages/Reports.jsx";
 import SettingsPage from "./pages/Settings.jsx";
+import Login from "./pages/Login.jsx";
+import OtpVerification from "./pages/OtpVerification.jsx";
 import NotFound from "./pages/NotFound.jsx";
+import ProtectedRoute from "./components/auth/ProtectedRoute.jsx";
 
 const queryClient = new QueryClient();
 
@@ -22,14 +25,16 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/equipment" element={<EquipmentPage />} />
-          <Route path="/equipment/:id" element={<EquipmentDetailPage />} />
-          <Route path="/maintenance" element={<MaintenancePage />} />
-          <Route path="/maintenance/:id" element={<MaintenanceDetailPage />} />
-          <Route path="/calendar" element={<CalendarPage />} />
-          <Route path="/reports" element={<ReportsPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/otp-verification" element={<OtpVerification />} />
+          <Route path="/equipment" element={<ProtectedRoute><EquipmentPage /></ProtectedRoute>} />
+          <Route path="/equipment/:id" element={<ProtectedRoute><EquipmentDetailPage /></ProtectedRoute>} />
+          <Route path="/maintenance" element={<ProtectedRoute><MaintenancePage /></ProtectedRoute>} />
+          <Route path="/maintenance/:id" element={<ProtectedRoute><MaintenanceDetailPage /></ProtectedRoute>} />
+          <Route path="/calendar" element={<ProtectedRoute><CalendarPage /></ProtectedRoute>} />
+          <Route path="/reports" element={<ProtectedRoute><ReportsPage /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

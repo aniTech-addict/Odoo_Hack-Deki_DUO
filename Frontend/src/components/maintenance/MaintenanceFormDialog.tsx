@@ -18,6 +18,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { equipment as mockEquipment, maintenanceTeams } from '@/data/mockData';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 interface MaintenanceFormDialogProps {
   open: boolean;
@@ -28,11 +29,105 @@ export function MaintenanceFormDialog({
   open,
   onOpenChange,
 }: MaintenanceFormDialogProps) {
-  const [selectedEquipment, setSelectedEquipment] = useState<string>('');
-  const [requestType, setRequestType] = useState<string>('corrective');
-  const [status, setStatus] = useState<string>('new');
+  const { toast } = useToast();
+  const [formData, setFormData] = useState({
+    subject: '',
+    status: 'New Request',
+    equipment: {
+      id: '',
+      serialNumber: '',
+      category: ''
+    },
+    maintenanceType: 'Corrective',
+    duration: 0,
+    scheduledDate: null
+  });
 
-  const selectedEq = mockEquipment.find((e) => e.id === selectedEquipment);
+  const selectedEq = mockEquipment.find((e) => e.id === formData.equipment.id);
+
+  const handleInputChange = (name: string, value: any) => {
+    if (name.startsWith('equipment.')) {
+      const field = name.split('.')[1];
+      setFormData(prev => ({
+        ...prev,
+        equipment: {
+          ...prev.equipment,
+          [field]: value
+        }
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
+  };
+
+  const handleEquipmentChange = (equipmentId: string) => {
+    const eq = mockEquipment.find(e => e.id === equipmentId);
+    if (eq) {
+      setFormData(prev => ({
+        ...prev,
+        equipment: {
+          id: equipmentId,
+          serialNumber: eq.serialNumber,
+          category: eq.category
+        }
+      }));
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const payload = {
+      ...formData,
+      duration: Number(formData.duration),
+      scheduledDate: formData.scheduledDate ? new Date(formData.scheduledDate) : null
+    };
+
+    try {
+      const response = await fetch('/api/maintenance', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        toast({
+          title: 'Success',
+          description: 'Maintenance request created successfully'
+        });
+        onOpenChange(false);
+        // Reset form
+        setFormData({
+          subject: '',
+          status: 'New Request',
+          equipment: {
+            id: '',
+            serialNumber: '',
+            category: ''
+          },
+          maintenanceType: 'Corrective',
+          duration: 0,
+          scheduledDate: null
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: 'Failed to create maintenance request',
+          variant: 'destructive'
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'An error occurred',
+        variant: 'destructive'
+      });
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -41,24 +136,24 @@ export function MaintenanceFormDialog({
           <DialogTitle>Create Maintenance Request</DialogTitle>
         </DialogHeader>
 
-        <form className="space-y-4 mt-4">
+        <form className="space-y-4 mt-4" onSubmit={handleSubmit}>
           {/* Request Type */}
           <div className="space-y-2">
             <Label>Request Type</Label>
             <div className="flex gap-2">
               <Button
                 type="button"
-                variant={requestType === 'corrective' ? 'default' : 'outline'}
+                variant={formData.maintenanceType === 'Corrective' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setRequestType('corrective')}
+                onClick={() => handleInputChange('maintenanceType', 'Corrective')}
               >
                 Corrective
               </Button>
               <Button
                 type="button"
-                variant={requestType === 'preventive' ? 'default' : 'outline'}
+                variant={formData.maintenanceType === 'Preventive' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setRequestType('preventive')}
+                onClick={() => handleInputChange('maintenanceType', 'Preventive')}
               >
                 Preventive
               </Button>
@@ -68,13 +163,18 @@ export function MaintenanceFormDialog({
           {/* Subject */}
           <div className="space-y-2">
             <Label htmlFor="subject">Subject</Label>
-            <Input id="subject" placeholder="Describe the issue or task..." />
+            <Input
+              id="subject"
+              placeholder="Describe the issue or task..."
+              value={formData.subject}
+              onChange={(e) => handleInputChange('subject', e.target.value)}
+            />
           </div>
 
           {/* Equipment */}
           <div className="space-y-2">
             <Label>Equipment</Label>
-            <Select value={selectedEquipment} onValueChange={setSelectedEquipment}>
+            <Select value={formData.equipment.id} onValueChange={handleEquipmentChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Select equipment" />
               </SelectTrigger>
@@ -92,9 +192,9 @@ export function MaintenanceFormDialog({
           {selectedEq && (
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Maintenance Team</Label>
+                <Label>Serial Number</Label>
                 <Input
-                  value={selectedEq.maintenanceTeam}
+                  value={selectedEq.serialNumber}
                   readOnly
                   className="input-autofilled"
                 />
@@ -111,42 +211,45 @@ export function MaintenanceFormDialog({
           )}
 
           {/* Scheduled Date */}
-          {requestType === 'preventive' && (
+          {formData.maintenanceType === 'Preventive' && (
             <div className="space-y-2">
               <Label htmlFor="scheduledDate">Scheduled Date</Label>
-              <Input id="scheduledDate" type="date" />
+              <Input
+                id="scheduledDate"
+                type="date"
+                value={formData.scheduledDate || ''}
+                onChange={(e) => handleInputChange('scheduledDate', e.target.value)}
+              />
             </div>
           )}
 
           {/* Duration */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="duration">Estimated Duration (hours)</Label>
-              <Input id="duration" type="number" placeholder="0" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="hoursSpent">Hours Spent</Label>
-              <Input id="hoursSpent" type="number" placeholder="0" />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="duration">Estimated Duration (hours)</Label>
+            <Input
+              id="duration"
+              type="number"
+              placeholder="0"
+              value={formData.duration}
+              onChange={(e) => handleInputChange('duration', Number(e.target.value))}
+            />
           </div>
 
           {/* Status */}
           <div className="space-y-2">
             <Label>Status</Label>
-            <Select value={status} onValueChange={setStatus}>
+            <Select value={formData.status} onValueChange={(value) => handleInputChange('status', value)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="new">New</SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="repaired">Repaired</SelectItem>
-                <SelectItem value="scrap">
-                  <span className="text-destructive">Scrap</span>
-                </SelectItem>
+                <SelectItem value="New Request">New Request</SelectItem>
+                <SelectItem value="In Progress">In Progress</SelectItem>
+                <SelectItem value="Repaired">Repaired</SelectItem>
+                <SelectItem value="Scrap">Scrap</SelectItem>
               </SelectContent>
             </Select>
-            {status === 'scrap' && (
+            {formData.status === 'Scrap' && (
               <p className="text-xs text-destructive">
                 Warning: This will mark the equipment as unusable.
               </p>
