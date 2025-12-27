@@ -1,5 +1,6 @@
 import mongoose, { startSession } from "mongoose"
 import User from '../models/user.model.js';
+import Otp from '../models/otp.model.js';
 import { createAccessToken, createRefreshToken} from '../util/createToken.js';
 import bcrypt from 'bcrypt';
 import { generateOtp } from '../util/otpManager.js';
@@ -27,12 +28,19 @@ export const sign_up = async (req, res, next) => {
         }
         const newUser = new User({ username, email, password });
 
+        await newUser.save({ session });
+
+        // Delete any existing OTP for this user
+        if (newUser.otp) {
+          await Otp.findByIdAndDelete(newUser.otp);
+        }
+
         const otpId = await generateOtp(email);
         newUser.otp = otpId;
         await newUser.save({ session });
 
         await session.commitTransaction();
-        
+
         return res.status(201).json({ status: 'success', message: 'redirect to otp verification' ,userId: newUser._id});  // in frontend localStorage.setItem('userId', newUser._id)
      } catch (error) {
         console.log("Error in sign up:", error);
@@ -58,6 +66,10 @@ export const otp_verification = async(req, res)=>{
     try {
         session.startTransaction();
         user.verified = true;
+        // Delete the OTP document
+        if (user.otp) {
+          await Otp.findByIdAndDelete(user.otp._id);
+        }
         user.otp = null;
         const payload = { userId: user._id, username: user.username };
         const accessToken = await createAccessToken(payload);
@@ -66,7 +78,7 @@ export const otp_verification = async(req, res)=>{
         //set or update cookies
         res.cookie(
             'token',
-             accessToken,
+              accessToken,
             { httpOnly: true, secure: true, sameSite: 'strict' }
             );
 

@@ -1,6 +1,7 @@
 import User from '../models/user.model.js';
 import Otp from '../models/otp.model.js';
 import {createMail, sendMail} from './sendMail.util.js';
+import bcrypt from 'bcrypt';
 async function sendOtp(otp,email){
     const mailContent =new createMail("Opt verification",`Your Otp is`,`<h1> ${otp} </h1>`)
     await sendMail(email, mailContent);
@@ -21,7 +22,8 @@ async function verifyOtp(userId, otp){
         console.log("OTP not found");
         return false;
     }
-    if (user.otp.otp != otp) {
+    const isValid = await bcrypt.compare(otp, user.otp.otp);
+    if (!isValid) {
         return false;
     }
     return true

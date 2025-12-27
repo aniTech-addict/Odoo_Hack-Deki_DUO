@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 
 //Config
 import { PORT } from './config/env.js';
@@ -10,6 +11,10 @@ import maintenanceRouter from './routes/maintenance.routes.js';
 const app = express();
 await connectDb();
 
+app.use(cors({
+  origin: 'http://localhost:5173', // Vite dev server default port
+  credentials: true
+}));
 app.use(express.json());
 app.use(cookieParser());
 

@@ -74,5 +74,5 @@ const MaintenanceRequestSchema = new mongoose.Schema({
 MaintenanceRequestSchema.index({ status: 1, priority: 1 });
 MaintenanceRequestSchema.index({ 'equipment.id': 1 });
 
-const MaintenanceRequest = mongoose.models.MaintenanceRequest || mongoose.model('MaintenanceRequest', maintenanceRequestSchema) 
+const MaintenanceRequest = mongoose.models.MaintenanceRequest || mongoose.model('MaintenanceRequest', MaintenanceRequestSchema)
 export default MaintenanceRequest; 

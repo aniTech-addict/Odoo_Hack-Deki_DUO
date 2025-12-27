@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import axios from 'axios';
 import {
   Dialog,
   DialogContent,
@@ -86,44 +87,30 @@ export function MaintenanceFormDialog({
     };
 
     try {
-      const response = await fetch('/api/maintenance', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
+      await axios.post('/api/maintenance', payload);
+      toast({
+        title: 'Success',
+        description: 'Maintenance request created successfully'
       });
-
-      if (response.ok) {
-        toast({
-          title: 'Success',
-          description: 'Maintenance request created successfully'
-        });
-        onOpenChange(false);
-        // Reset form
-        setFormData({
-          subject: '',
-          status: 'New Request',
-          equipment: {
-            id: '',
-            serialNumber: '',
-            category: ''
-          },
-          maintenanceType: 'Corrective',
-          duration: 0,
-          scheduledDate: null
-        });
-      } else {
-        toast({
-          title: 'Error',
-          description: 'Failed to create maintenance request',
-          variant: 'destructive'
-        });
-      }
+      onOpenChange(false);
+      // Reset form
+      setFormData({
+        subject: '',
+        status: 'New Request',
+        equipment: {
+          id: '',
+          serialNumber: '',
+          category: ''
+        },
+        maintenanceType: 'Corrective',
+        duration: 0,
+        scheduledDate: null
+      });
     } catch (error) {
+      const message = error.response?.data?.message || 'An error occurred';
       toast({
         title: 'Error',
-        description: 'An error occurred',
+        description: message,
         variant: 'destructive'
       });
     }

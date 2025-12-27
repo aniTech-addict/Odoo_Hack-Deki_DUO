@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,42 +17,45 @@ const Login = () => {
   const handleSignUp = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/v1/auth/sign_up', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(signUpData)
-      });
-      const data = await response.json();
-      if (response.ok) {
-        localStorage.setItem('userId', data.userId);
-        toast({ title: 'Success', description: 'OTP sent to your email. Please verify.' });
-        navigate('/otp-verification');
-      } else {
-        toast({ title: 'Error', description: data.message, variant: 'destructive' });
-      }
+      const response = await axios.post('/api/v1/auth/sign_up', signUpData);
+      localStorage.setItem('userId', response.data.userId);
+      localStorage.setItem('email', signUpData.email);
+      toast({ title: 'Success', description: 'OTP sent to your email. Please verify.' });
+      navigate('/otp-verification');
     } catch (error) {
-      toast({ title: 'Error', description: 'An error occurred', variant: 'destructive' });
+      let message = 'An error occurred';
+      if (error.response?.data?.errors) {
+        const errors = error.response.data.errors;
+        const userFriendlyMessages = Object.values(errors).map(err => {
+          if (err.path === 'password' && err.kind === 'minlength') {
+            return 'Password must be at least 6 characters long';
+          }
+          if (err.path === 'username' && err.kind === 'required') {
+            return 'Username is required';
+          }
+          if (err.path === 'email' && err.kind === 'required') {
+            return 'Email is required';
+          }
+          return err.message; // fallback
+        });
+        message = userFriendlyMessages.join(', ');
+      } else if (error.response?.data?.message) {
+        message = error.response.data.message;
+      }
+      toast({ title: 'Sign Up Failed', description: message, variant: 'destructive' });
     }
   };
 
   const handleSignIn = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/v1/auth/sign_in', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(signInData)
-      });
-      const data = await response.json();
-      if (response.ok) {
-        localStorage.setItem('isLoggedIn', 'true');
-        toast({ title: 'Success', description: 'Signed in successfully' });
-        navigate('/');
-      } else {
-        toast({ title: 'Error', description: data.message, variant: 'destructive' });
-      }
+      const response = await axios.post('/api/v1/auth/sign_in', signInData);
+      localStorage.setItem('isLoggedIn', 'true');
+      toast({ title: 'Success', description: 'Signed in successfully' });
+      navigate('/');
     } catch (error) {
-      toast({ title: 'Error', description: 'An error occurred', variant: 'destructive' });
+      const message = error.response?.data?.message || 'An error occurred';
+      toast({ title: 'Sign In Failed', description: message, variant: 'destructive' });
     }
   };
 
@@ -103,9 +107,9 @@ const Login = () => {
                       required
                     />
                   </div>
-                  <Button type="submit" className="w-full h-11 bg-blue-600 hover:bg-blue-700">
-                    Sign In
-                  </Button>
+                  <Button type="submit" className="w-full h-11 bg-blue-700 hover:bg-blue-800 text-white font-semibold shadow-lg">
+                      Sign In
+                    </Button>
                 </form>
               </TabsContent>
               <TabsContent value="sign-up" className="space-y-4">
@@ -145,9 +149,9 @@ const Login = () => {
                       required
                     />
                   </div>
-                  <Button type="submit" className="w-full h-11 bg-blue-600 hover:bg-blue-700">
-                    Create Account
-                  </Button>
+                  <Button type="submit" className="w-full h-11 bg-blue-700 hover:bg-blue-800 text-white font-semibold shadow-lg">
+                      Create Account
+                    </Button>
                 </form>
               </TabsContent>
             </Tabs>
