@@ -35,7 +35,7 @@ const userSchema = new mongoose.Schema({
     },
     type:{
         type: String,
-        enum: ["user","admin"],
+        enum: ["user","manager","technician"],
         default: "user"
     },
     role: {
@@ -53,12 +53,9 @@ const userSchema = new mongoose.Schema({
     }
 },{timestamps:true})
 
-userSchema.pre("save", async function(next){
-     if (!this.isModified('password')) {
-            return next();
-        }
+userSchema.pre("save", async function(){
+    if (!this.isModified('password')) return;
     this.password = await encryptPassword(this.password);
-    next();
 })
 
 userSchema.pre('deleteOne', { document: true }, async function(next) {

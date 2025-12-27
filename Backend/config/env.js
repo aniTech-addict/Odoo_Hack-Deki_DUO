@@ -8,4 +8,5 @@ config({
 export const { PORT,
      MONGO_DB_URI,
      JWT_ACCESS_SECRET, JWT_REFRESH_SECRET,
+     EMAIL_PASSWORD
      } = process.env
