@@ -1,4 +1,5 @@
 import mongoose, { Schema } from "mongoose";
+import bcrypt from 'bcrypt';
 import User from '../models/user.model.js';
 
 const otpSchema = new Schema({
@@ -16,10 +17,9 @@ const otpSchema = new Schema({
     }
 },{timestamps: true})
 
-otpSchema.pre('save', function(next) {
-    if(!this.isModified('otp')) return next();
-    this.otp = bcrypt.hashSync(this.otp, 10);
-    next();
+otpSchema.pre('save', async function() {
+    if(!this.isModified('otp')) return;
+    this.otp = await bcrypt.hash(this.otp, 10);
 });
 
 const Otp = mongoose.models.Otp || mongoose.model('Otp', otpSchema) 

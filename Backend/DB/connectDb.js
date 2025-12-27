@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
-import { MONOGO_DB_URI } from "../config/env.js";
+import { MONGO_DB_URI } from "../config/env.js";
 
-if(!MONOGO_DB_URI) throw new Error('--- MONGO_DB_URI NOT DEFINED --- remove from prod');
+if(!MONGO_DB_URI) throw new Error('--- MONGO_DB_URI NOT DEFINED --- remove from prod');
 
 async function connectDb(){
     try {
@@ -12,7 +12,7 @@ async function connectDb(){
         mongoose.connection.on('error', (err) => {
             console.error('MongoDB connection error:', err);
         });
-        const conn = await mongoose.connect(MONOGO_DB_URI);
+        const conn = await mongoose.connect(MONGO_DB_URI);
         console.log('MongoDB connect promise resolved.');
     } catch (error) {
         console.log("Error connecting to db",error )
