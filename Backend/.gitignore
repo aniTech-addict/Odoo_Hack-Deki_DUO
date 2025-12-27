@@ -1,5 +1,13 @@
+# Backend-specific ignores
 node_modules/
 
+# Environment files (root .gitignore will catch most, but be explicit for security)
 .env
 .env.local
+.env.development.local
 .env.testing
+.env.production.local
+
+# Logs specific to backend
+backend.log
+*.log
